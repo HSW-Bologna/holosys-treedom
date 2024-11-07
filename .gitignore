@@ -1,6 +1,7 @@
 # Custom
 tmp
 managed_components
+.simulator_db.json
 
 # Scons
 .sconsign.dblite

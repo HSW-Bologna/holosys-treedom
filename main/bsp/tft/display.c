@@ -16,6 +16,7 @@
 #include "sdkconfig.h"
 #include "../hardwareprofile.h"
 #include "display.h"
+#include "freertos/queue.h"
 
 
 static const char *TAG = "TftDisplay";
@@ -51,6 +52,7 @@ static bool notify_lvgl_flush_ready(esp_lcd_panel_io_handle_t panel_io, esp_lcd_
 }
 
 
+
 void bsp_tft_display_lvgl_flush_cb(lv_display_t *display, const lv_area_t *area, uint8_t *px_map) {
     (void)display;
 
@@ -58,6 +60,7 @@ void bsp_tft_display_lvgl_flush_cb(lv_display_t *display, const lv_area_t *area,
     int offsetx2 = area->x2;
     int offsety1 = area->y1;
     int offsety2 = area->y2;
+
     esp_lcd_panel_draw_bitmap(lcd_handle, offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
 }
 
@@ -66,7 +69,7 @@ void bsp_tft_display_init(void (*display_flush_ready_cb)(void), size_t buffer_si
     display_flush_ready = display_flush_ready_cb;
 
     const ledc_channel_config_t LCD_backlight_channel = {
-        .gpio_num   = BSP_HAP_RETRO,
+        .gpio_num   = BSP_HAP_BKL_PWM,
         .speed_mode = BACKLIGHT_LEDC_MODE,
         .channel    = BACKLIGHT_LEDC_CHANNEL,
         .intr_type  = LEDC_INTR_DISABLE,
@@ -82,14 +85,14 @@ void bsp_tft_display_init(void (*display_flush_ready_cb)(void), size_t buffer_si
         .freq_hz         = BACKLIGHT_LEDC_FRQUENCY,
         .clk_cfg         = LEDC_AUTO_CLK,
     };
-    ESP_LOGI(TAG, "Initializing LEDC for backlight pin: %d", BSP_HAP_RETRO);
+    ESP_LOGI(TAG, "Initializing LEDC for backlight pin: %d", BSP_HAP_BKL_PWM);
 
     ESP_ERROR_CHECK(ledc_timer_config(&LCD_backlight_timer));
     ESP_ERROR_CHECK(ledc_channel_config(&LCD_backlight_channel));
 
     const esp_lcd_panel_io_spi_config_t io_config = {
-        .cs_gpio_num         = BSP_HAP_CS_D,
-        .dc_gpio_num         = BSP_HAP_D,
+        .cs_gpio_num         = BSP_HAP_DIS_CS,
+        .dc_gpio_num         = BSP_HAP_DIS_RS,
         .spi_mode            = 0,
         .pclk_hz             = DISPLAY_REFRESH_HZ,
         .trans_queue_depth   = DISPLAY_SPI_QUEUE_LEN,
@@ -106,8 +109,8 @@ void bsp_tft_display_init(void (*display_flush_ready_cb)(void), size_t buffer_si
         }};
 
     const esp_lcd_panel_dev_config_t lcd_config = {
-        .reset_gpio_num = BSP_HAP_RESET_D,
-        .color_space    = LCD_RGB_ELEMENT_ORDER_RGB,
+        .reset_gpio_num = BSP_HAP_DIS_RST,
+        .color_space    = LCD_RGB_ELEMENT_ORDER_BGR,
         .bits_per_pixel = 18,
         .flags          = {.reset_active_high = 0},
         .vendor_config  = NULL,
@@ -120,8 +123,8 @@ void bsp_tft_display_init(void (*display_flush_ready_cb)(void), size_t buffer_si
     ESP_ERROR_CHECK(esp_lcd_panel_reset(lcd_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(lcd_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_invert_color(lcd_handle, true));
-    ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(lcd_handle, true));
-    ESP_ERROR_CHECK(esp_lcd_panel_mirror(lcd_handle, false, true));
+    // ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(lcd_handle, true));
+    ESP_ERROR_CHECK(esp_lcd_panel_mirror(lcd_handle, false, false));
     ESP_ERROR_CHECK(esp_lcd_panel_set_gap(lcd_handle, 0, 0));
 #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
     ESP_ERROR_CHECK(esp_lcd_panel_disp_off(lcd_handle, false));

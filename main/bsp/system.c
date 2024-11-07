@@ -10,11 +10,11 @@ static const int   SPI_MAX_TRANSFER_SIZE = 32768;
 
 
 void bsp_system_init(void) {
-    ESP_LOGI(TAG, "Initializing SPI bus (MOSI:%d, MISO:%d, CLK:%d)", BSP_HAP_DOUT_D, GPIO_NUM_NC, BSP_HAP_CLK_D);
+    ESP_LOGI(TAG, "Initializing SPI bus (MOSI:%d, MISO:%d, CLK:%d)", BSP_HAP_DIS_SDI, GPIO_NUM_NC, BSP_HAP_DIS_SCL);
     spi_bus_config_t bus = {
-        .mosi_io_num     = BSP_HAP_DOUT_D,
+        .mosi_io_num     = BSP_HAP_DIS_SDI,
         .miso_io_num     = GPIO_NUM_NC,
-        .sclk_io_num     = BSP_HAP_CLK_D,
+        .sclk_io_num     = BSP_HAP_DIS_SCL,
         .quadwp_io_num   = GPIO_NUM_NC,
         .quadhd_io_num   = GPIO_NUM_NC,
         .data4_io_num    = GPIO_NUM_NC,
@@ -31,8 +31,8 @@ void bsp_system_init(void) {
     ESP_LOGI(TAG, "Initialize I2C bus");
     i2c_config_t i2c_conf = {
         .mode             = I2C_MODE_MASTER,
-        .sda_io_num       = BSP_HAP_SDA,
-        .scl_io_num       = BSP_HAP_SCL,
+        .sda_io_num       = BSP_HAP_UC_SDA,
+        .scl_io_num       = BSP_HAP_UC_SCL,
         .sda_pullup_en    = GPIO_PULLUP_DISABLE,
         .scl_pullup_en    = GPIO_PULLUP_DISABLE,
         .master.clk_speed = 100 * 1000,
